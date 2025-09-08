@@ -6,7 +6,7 @@
 
 ## 📸 Screenshots  
 **Home / Chat Page**  
-![App Screenshot](./screenshot.png)  
+![App Screenshot](./shot.png)  
 
 ---
 
