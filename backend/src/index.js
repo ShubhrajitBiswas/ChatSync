@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 
 import path from "path";
+import fs from "fs";
 
 import { connectDB } from "./lib/db.js";
 
@@ -18,9 +19,16 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_ORIGIN,
+  process.env.RENDER_EXTERNAL_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -29,11 +37,20 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  const candidatePaths = [
+    path.join(__dirname, "../frontend/dist"),
+    path.join(__dirname, "../../frontend/dist"),
+    path.join(process.cwd(), "frontend/dist"),
+    path.join(process.cwd(), "../frontend/dist"),
+  ];
+  const distPath = candidatePaths.find((p) => fs.existsSync(p));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
+  if (distPath) {
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
 }
 
 server.listen(PORT, () => {
